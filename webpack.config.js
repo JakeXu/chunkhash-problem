@@ -14,7 +14,7 @@ module.exports = {
   context: path.join(__dirname, 'src'),
   entry: {
     main: ['./entry.js'],
-    vendor: ['angular', 'underscore']
+    vendor: ['./vendor.js']
   },
 
   output: {
@@ -28,6 +28,8 @@ module.exports = {
       minChunks: Infinity
     }),
 
+    new webpack.optimize.CommonsChunkPlugin({name: 'meta', chunks: ['vendor']}),
+
     new ChunkManifestPlugin({
       filename: 'chunk-manifest.json',
       manifestVariable: 'webpackManifest'
@@ -35,7 +37,7 @@ module.exports = {
 
     new webpack.optimize.DedupePlugin(),
 
-    new webpack.optimize.OccurenceOrderPlugin(),
+    new webpack.optimize.OccurenceOrderPlugin(true),
 
     new webpack.optimize.UglifyJsPlugin({
       compress: {
