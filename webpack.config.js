@@ -2,7 +2,7 @@ var fs = require('fs');
 var path = require('path');
 var rimraf = require('rimraf');
 var webpack = require('webpack');
-var ChunkManifestPlugin = require('chunk-manifest-webpack-plugin');
+var HtmlWebpackPlugin = require('html-webpack-plugin');
 
 var out = path.join(__dirname, 'build');
 
@@ -19,25 +19,40 @@ module.exports = {
 
   output: {
     path: out,
-    filename: '[name].[chunkhash].js'
+    filename: '[name].[chunkhash].js',
+    chunkFilename: '[chunkhash].js'
   },
 
   plugins: [
     new webpack.optimize.CommonsChunkPlugin({
-      name: 'vendor',
-      minChunks: Infinity
+      names: ['vendor', 'manifest']
     }),
-
-    new webpack.optimize.CommonsChunkPlugin({name: 'meta', chunks: ['vendor']}),
-
-    new ChunkManifestPlugin({
-      filename: 'chunk-manifest.json',
-      manifestVariable: 'webpackManifest'
-    }),
-
+    
+    new webpack.NamedModulesPlugin(),
+    
     new webpack.optimize.DedupePlugin(),
+    
+    new HtmlWebpackPlugin({
+      excludeChunks: ['manifest'],
+      templateContent: function(templateParams, compilation) {
+        Object.keys(compilation.assets).forEach((key) => {
+          if (key.indexOf('manifest.') === 0) {
+            templateParams.chunkManifest = compilation.assets[key]._value;
+            delete compilation.assets[key];
+          }
+        })
 
-    new webpack.optimize.OccurenceOrderPlugin(true),
+        var indexTemplate = fs.readFileSync(path.resolve('./index.html'), 'utf8');
+        var tmpl = require('blueimp-tmpl').tmpl;
+
+        return tmpl(indexTemplate, templateParams);
+      },
+
+      minify: {
+        removeComments: true,
+        collapseWhitespace: true
+      }
+    }),
 
     new webpack.optimize.UglifyJsPlugin({
       compress: {
