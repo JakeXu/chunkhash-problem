@@ -43,7 +43,7 @@ module.exports = {
         })
 
         var indexTemplate = fs.readFileSync(path.resolve('./index.html'), 'utf8');
-        var tmpl = require('blueimp-tmpl');
+        var tmpl = require('blueimp-tmpl').tmpl;
 
         return tmpl(indexTemplate, templateParams);
       },
